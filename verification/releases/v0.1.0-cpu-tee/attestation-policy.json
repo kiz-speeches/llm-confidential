@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "version": "v0.1.0-cpu-tee",
+  "git_commit": "e1eab0df7d4cfd81bff7b2b4bd8f33e0162ac886",
+  "measurement": "127ac23ebaf9e97ecafa804aff9d56cc2398779fa06fadfa85700b8bf79377a37e98c5d566bd16fc7d821f6de60c20c2",
+  "expected_host_data": "8cdd9683a67c4c14432436e6ac50fd41d9b74c49a042d1d6e52fac8e673f1e65",
+  "cpu_image": "harbor.speeches.dev/library/llm-confidential-cpu@sha256:9bc4fc18f1f868ab2c02311575c27aa862147296e31341a040f988d459fab285",
+  "policy_sha256": "555bf05e23367a3760debe8bbeeb0e5bb0e21f1851ceab23957c8ba3c466a714",
+  "verification_scope": "cpu_guest_session_key_and_cpu_workload",
+  "gpu_verified": false
+}

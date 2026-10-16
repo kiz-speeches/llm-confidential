@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "measurement": "127ac23ebaf9e97ecafa804aff9d56cc2398779fa06fadfa85700b8bf79377a37e98c5d566bd16fc7d821f6de60c20c2",
+      "host_data": "8cdd9683a67c4c14432436e6ac50fd41d9b74c49a042d1d6e52fac8e673f1e65",
+      "path": "verification/releases/v0.1.0-cpu-tee"
+    }
+  ]
+}

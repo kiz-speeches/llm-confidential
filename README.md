@@ -119,3 +119,37 @@ Image-Digest steht in der Workflow-Zusammenfassung. Es gibt noch kein Release-/V
 GHCR-Pakete müssen in GitHub separat öffentlich freigegeben werden; ein öffentliches
 Repository macht ein neues Paket nicht automatisch öffentlich.
 
+
+## CPU-TEE-Gateway für den Chat
+
+`tee.py` läuft separat in einer AMD-SNP-VM; der GPU-Worker bleibt unverändert.
+`Dockerfile.tee` übernimmt die per Digest festgelegte Whisper-CPU-Basis mit ihren
+gesperrten Abhängigkeiten und kopiert nur Gateway und SNP-ABI-Encoder `evidence.py` hinein.
+
+`/llm-api/attestation` liefert ausschließlich AMD-Evidence und die gebundenen
+öffentlichen Sitzungsdaten. Der Client prüft AMD-Kette, Challenge, Gastmessung und
+HOST_DATA. Anschließend lädt er `verification/accepted.json` und die drei Dateien
+des passenden Eintrags direkt von GitHub, jeweils aus demselben aufgelösten Commit.
+Er hasht InitData und Policy und prüft den darin festgelegten CPU-Image-Digest.
+Ohne erfolgreiche Prüfung sendet er keine Nachrichten. Die Gastmessung wird wie
+bei Whisper administrativ referenziert, nicht unabhängig nachgebaut. Maintainer
+dieses Repositories und der vertrauenswürdig bezogene Client bleiben Vertrauensannahmen.
+
+`/llm-api/chat` akzeptiert ausschließlich AES-GCM-verschlüsselte Anfragen. ECDH P-256
+und HKDF-SHA256 verwenden die eigene Domäne `llm-cpu-tee-v1`. Jeder verschlüsselte
+Antwort-Frame bindet Sitzung, Anfragenummer und Reihenfolge. Veränderte Frames und
+fehlende Endmarkierungen führen zu einem Fehler, ohne Klartext-Fallback. Sitzungen
+laufen nach 30 Minuten ab; alte Anfragen werden abgewiesen. Die gebundene Policy
+sperrt Exec und Policywechsel. UI und Kubernetes-Deployment liegen weiterhin außerhalb.
+
+**Grenze:** Hinter der CPU-TEE gehen Nachrichten per HTTP zum gewöhnlichen
+GPU-Worker. GPU, Modell, deren Antworten und Tokenzähler sind nicht
+hardware-attestiert. Der externe `GPU_API_KEY` darf als einziger variabler
+Anwendungsparameter genau 64 hexadezimale Zeichen enthalten. Er ist ein
+Zugangsschlüssel zum ungeschützten Worker und kein Vertrauensanker; sein Wert steht
+nicht in den öffentlichen Prüfdateien. Zieladresse und Programmstart stehen im Code.
+
+Die Hinweise auf fehlende TEE im vorherigen Abschnitt betreffen das GPU-Image.
+Der zusätzliche CPU-Gateway schützt den Kanal bis zur CPU.
+Protokolltests: `python -m unittest discover -s tee-tests -v` (simulierte Hardware).
+Die Pipeline baut GPU- und CPU-Image getrennt.
