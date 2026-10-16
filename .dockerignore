@@ -1,0 +1,6 @@
+*
+!api.py
+!run.py
+!model.py
+!model.lock.json
+!Dockerfile
