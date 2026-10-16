@@ -6,3 +6,6 @@
 !Dockerfile
 !tests/
 !tests/*.py
+!tee.py
+!evidence.py
+!Dockerfile.tee

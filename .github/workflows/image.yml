@@ -10,6 +10,34 @@ concurrency:
   group: llm-image
   cancel-in-progress: false
 jobs:
+  cpu-gateway:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Test CPU gateway in its pinned runtime
+        run: docker run --rm --read-only -v "$PWD:/src:ro" -w /src harbor.speeches.dev/library/whisper-confidential-cpu@sha256:f8167403f3524267e62e9127aab4546d13f7beb3d38b7f8adf9094864de19752 python -m unittest discover -s tee-tests -v
+      - name: Sign in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Build CPU gateway
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile.tee
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/kiz-speeches/llm-confidential-cpu:sha-${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          provenance: mode=max
+          sbom: true
+      - name: Record CPU image reference
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: echo "ghcr.io/kiz-speeches/llm-confidential-cpu@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 90

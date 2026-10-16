@@ -13,3 +13,7 @@ jobs:
       - name: Install API test dependencies (runtime comes from pinned vLLM image)
         run: python -m pip install fastapi==0.138.0 httpx==0.28.1 uvicorn==0.35.0 pydantic==2.13.4
       - run: python -m unittest discover -s tests -v
+      - name: Check encrypted CPU gateway protocol (mock hardware)
+        run: |
+          python -m pip install cryptography==46.0.5
+          python -m unittest discover -s tee-tests -v

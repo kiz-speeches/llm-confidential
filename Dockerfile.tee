@@ -1,0 +1,5 @@
+# Reuse the already hash-pinned, dependency-locked SNP gateway base and ABI encoder.
+FROM harbor.speeches.dev/library/whisper-confidential-cpu@sha256:f8167403f3524267e62e9127aab4546d13f7beb3d38b7f8adf9094864de19752
+LABEL org.opencontainers.image.source="https://github.com/kiz-speeches/llm-confidential"
+COPY tee.py evidence.py /app/
+CMD ["python", "/app/tee.py"]
