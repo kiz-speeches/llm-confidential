@@ -4,3 +4,5 @@
 !model.py
 !model.lock.json
 !Dockerfile
+!tests/
+!tests/*.py
