@@ -6,6 +6,10 @@ on:
         description: Existing GHCR image digest (sha256:...)
         required: true
         type: string
+      copy:
+        description: Also copy the image after inspecting package access
+        type: boolean
+        default: true
 permissions:
   contents: read
   packages: read
@@ -13,7 +17,16 @@ concurrency:
   group: llm-harbor-copy
   cancel-in-progress: false
 jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Report package visibility without exposing registry credentials
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api /orgs/kiz-speeches/packages/container/llm-confidential --jq '{name,visibility,html_url,repository:.repository.full_name}'
   copy:
+    needs: inspect
+    if: inputs.copy
     runs-on: sec-runner
     timeout-minutes: 45
     steps:
