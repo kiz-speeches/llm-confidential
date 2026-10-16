@@ -1,0 +1,50 @@
+name: Copy image to Harbor
+on:
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: Existing GHCR image digest (sha256:...)
+        required: true
+        type: string
+permissions:
+  contents: read
+  packages: read
+concurrency:
+  group: llm-harbor-copy
+  cancel-in-progress: false
+jobs:
+  copy:
+    runs-on: sec-runner
+    timeout-minutes: 45
+    steps:
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Copy verified digest using the existing runner registry login
+        env:
+          SOURCE_DIGEST: ${{ inputs.digest }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, pathlib, re, subprocess
+          digest = os.environ['SOURCE_DIGEST']
+          assert re.fullmatch(r'sha256:[0-9a-f]{64}', digest), 'Invalid digest'
+          auth = pathlib.Path(os.environ['RUNNER_TEMP']) / 'llm-mirror-auth.json'
+          original = json.loads((pathlib.Path.home()/'.docker/config.json').read_text())
+          entries = original.get('auths', {})
+          assert any('harbor.speeches.dev' in key for key in entries), 'Missing existing Harbor login'
+          entries['ghcr.io'] = {'auth': base64.b64encode((os.environ['GITHUB_ACTOR']+':'+os.environ['GHCR_TOKEN']).encode()).decode()}
+          auth.write_text(json.dumps({'auths': entries})); auth.chmod(0o600)
+          source = 'ghcr.io/kiz-speeches/llm-confidential@' + digest
+          target = 'harbor.speeches.dev/library/llm-confidential:sha-' + digest[7:19]
+          tool = 'quay.io/skopeo/stable@sha256:22ea3c3baf639147b07fb9f2ea28a6308edf7909e919d91a5d296af0121d7ed9'
+          command = ['docker','run','--rm','--network','host','-v',str(auth)+':/auth.json:ro',tool]
+          try:
+              subprocess.run(command+['copy','--authfile','/auth.json','--all','--preserve-digests','docker://'+source,'docker://'+target],check=True)
+              actual = subprocess.check_output(command+['inspect','--authfile','/auth.json','--format','{{.Digest}}','docker://'+target],text=True).strip()
+              assert actual == digest, 'Registry digest changed'
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as output:
+                  output.write('harbor.speeches.dev/library/llm-confidential@'+actual+'\n')
+          finally:
+              auth.unlink(missing_ok=True)
+          PY

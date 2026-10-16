@@ -118,3 +118,8 @@ Gewichten und veröffentlicht nach GHCR unter `sha-<Git-Commit>`; der vollständ
 Image-Digest steht in der Workflow-Zusammenfassung. Es gibt noch kein Release-/Versionsregister.
 GHCR-Pakete müssen in GitHub separat öffentlich freigegeben werden; ein öffentliches
 Repository macht ein neues Paket nicht automatisch öffentlich.
+
+Als Fallback kann der manuelle Workflow `Copy image to Harbor` einen bereits
+gebauten GHCR-Digest über den vorhandenen `sec-runner` nach Harbor spiegeln.
+Er verwendet dessen vorhandenen Registry-Zugang und behält den Digest bei;
+ein erneuter Modell-Build ist dafür nicht nötig.
